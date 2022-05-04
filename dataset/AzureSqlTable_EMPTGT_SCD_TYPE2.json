@@ -1,0 +1,47 @@
+{
+	"name": "AzureSqlTable_EMPTGT_SCD_TYPE2",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "UID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "EMPID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "EMPNAME",
+				"type": "varchar"
+			},
+			{
+				"name": "EMPSAL",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DEPTID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ISACTIVE",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "EMPTGT_SCD_TYPE2"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

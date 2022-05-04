@@ -1,0 +1,87 @@
+{
+	"name": "df_Remove_Duplicates",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_EmpSrcEastFile1",
+						"type": "DatasetReference"
+					},
+					"name": "EmpSrcEastFile"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_EmpSrcEast2ndFile",
+						"type": "DatasetReference"
+					},
+					"name": "EmpSrcEast2ndFile"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_EmpLocDtl",
+						"type": "DatasetReference"
+					},
+					"name": "sinkEmpFileListCompleteData"
+				}
+			],
+			"transformations": [
+				{
+					"name": "union1"
+				},
+				{
+					"name": "RemovingDups"
+				},
+				{
+					"name": "sortonEmpId"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          EMPID as string,",
+				"          EMPNAME as string,",
+				"          EMPSAL as string,",
+				"          EMPLOCATION as string,",
+				"          DEPTID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmpSrcEastFile",
+				"source(output(",
+				"          EMPID as string,",
+				"          EMPNAME as string,",
+				"          EMPSAL as string,",
+				"          EMPLOCATION as string,",
+				"          DEPTID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmpSrcEast2ndFile",
+				"EmpSrcEastFile, EmpSrcEast2ndFile union(byName: true)~> union1",
+				"union1 aggregate(groupBy(EMPID),",
+				"     each(match(name!='EMPID'), $$ = first($$))) ~> RemovingDups",
+				"RemovingDups sort(asc(EMPID, true)) ~> sortonEmpId",
+				"sortonEmpId sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          EMPID as integer,",
+				"          EMPNAME as string,",
+				"          EMPSAL as integer,",
+				"          EMPLOCATION as string,",
+				"          DEPTID as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sinkEmpFileListCompleteData"
+			]
+		}
+	}
+}

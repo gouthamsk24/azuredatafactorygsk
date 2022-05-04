@@ -1,0 +1,42 @@
+{
+	"name": "ds_EmpFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage_SourceFiles",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "Emp.txt",
+				"folderPath": "sourcefiles",
+				"container": "gsk"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "EMPID",
+				"type": "String"
+			},
+			{
+				"name": "ENAME",
+				"type": "String"
+			},
+			{
+				"name": "ESAL",
+				"type": "String"
+			},
+			{
+				"name": "DEPTID",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

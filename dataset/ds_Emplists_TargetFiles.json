@@ -1,0 +1,23 @@
+{
+	"name": "ds_Emplists_TargetFiles",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage_SourceFiles",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "TargetFiles",
+				"container": "gsk"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,66 @@
+{
+	"name": "df_scdtype1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_EmpFile",
+						"type": "DatasetReference"
+					},
+					"name": "EmpSrc"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_EmpSink",
+						"type": "DatasetReference"
+					},
+					"name": "Empsink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "alterRow"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          EMPID as integer,",
+				"          ENAME as string,",
+				"          ESAL as integer,",
+				"          DEPTID as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmpSrc",
+				"EmpSrc alterRow(upsertIf(true())) ~> alterRow",
+				"alterRow sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          EMPID as integer,",
+				"          ENAME as string,",
+				"          ESAL as integer,",
+				"          DEPTID as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:false,",
+				"     updateable:false,",
+				"     upsertable:true,",
+				"     keys:['EMPID'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          EMPID,",
+				"          ENAME,",
+				"          ESAL,",
+				"          DEPTID",
+				"     )) ~> Empsink"
+			]
+		}
+	}
+}

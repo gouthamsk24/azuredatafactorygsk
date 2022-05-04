@@ -1,0 +1,24 @@
+{
+	"name": "ds_Delete_Emp_Files",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage_SourceFiles",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "TargetTestfiles",
+				"container": "gsk"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

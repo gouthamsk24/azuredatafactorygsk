@@ -1,0 +1,189 @@
+{
+	"name": "df_scdType2",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_EmpFile",
+						"type": "DatasetReference"
+					},
+					"name": "EmpSrc"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_EMPTGT_SCD_TYPE2",
+						"type": "DatasetReference"
+					},
+					"name": "EMPTGTSCDTYPE2"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_EMPTGT_SCD_TYPE2",
+						"type": "DatasetReference"
+					},
+					"name": "sinkInsert"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_EMPTGT_SCD_TYPE2",
+						"type": "DatasetReference"
+					},
+					"name": "sinkUpdate"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AssignIsActive"
+				},
+				{
+					"name": "lookuponTargetEmpforUpdate"
+				},
+				{
+					"name": "AssigningIsActiveto0"
+				},
+				{
+					"name": "UpdatingIsActiveflagto0"
+				},
+				{
+					"name": "RenamingTargetColumns"
+				},
+				{
+					"name": "selectingonlyrequiredcols"
+				},
+				{
+					"name": "lookuponTargetEmpforInsert"
+				},
+				{
+					"name": "FilteringNewRecordsandChangedRecs"
+				},
+				{
+					"name": "DefiningUpdateCondition"
+				},
+				{
+					"name": "FilteringOnlyExistingRecordswithChanges"
+				},
+				{
+					"name": "DefiningInsertCondition"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          EMPID as integer,",
+				"          ENAME as string,",
+				"          ESAL as integer,",
+				"          DEPTID as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmpSrc",
+				"source(output(",
+				"          UID as integer,",
+				"          EMPID as integer,",
+				"          EMPNAME as string,",
+				"          EMPSAL as integer,",
+				"          DEPTID as integer,",
+				"          ISACTIVE as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> EMPTGTSCDTYPE2",
+				"FilteringNewRecordsandChangedRecs derive(IsActive = 1) ~> AssignIsActive",
+				"EmpSrc, RenamingTargetColumns lookup(EMPID == sql_EMPID,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> lookuponTargetEmpforUpdate",
+				"selectingonlyrequiredcols derive(ISACTIVE = 0) ~> AssigningIsActiveto0",
+				"AssigningIsActiveto0 alterRow(updateIf(true())) ~> UpdatingIsActiveflagto0",
+				"EMPTGTSCDTYPE2 select(mapColumn(",
+				"          sql_UID = UID,",
+				"          sql_EMPID = EMPID,",
+				"          sql_EMPNAME = EMPNAME,",
+				"          sql_EMPSAL = EMPSAL,",
+				"          sql_DEPTID = DEPTID,",
+				"          sql_ISACTIVE = ISACTIVE",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> RenamingTargetColumns",
+				"FilteringOnlyExistingRecordswithChanges select(mapColumn(",
+				"          sql_UID,",
+				"          sql_EMPID,",
+				"          sql_EMPNAME,",
+				"          sql_EMPSAL,",
+				"          sql_DEPTID,",
+				"          sql_ISACTIVE",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectingonlyrequiredcols",
+				"EmpSrc, RenamingTargetColumns lookup(EMPID == sql_EMPID,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> lookuponTargetEmpforInsert",
+				"DefiningInsertCondition filter(isNull (sql_EMPID) || (HashcolSrc!=HashcolTgt)) ~> FilteringNewRecordsandChangedRecs",
+				"lookuponTargetEmpforUpdate derive(HashcolSrc = sha2(256,EMPID,ENAME,ESAL,DEPTID ),",
+				"          HashcolTgt = sha2(256, sql_EMPID,sql_EMPNAME,sql_EMPSAL,sql_DEPTID)) ~> DefiningUpdateCondition",
+				"DefiningUpdateCondition filter(!isNull (sql_EMPID) && HashcolSrc!=HashcolTgt) ~> FilteringOnlyExistingRecordswithChanges",
+				"lookuponTargetEmpforInsert derive(HashcolSrc = sha2(256,EMPID,ENAME,ESAL,DEPTID ),",
+				"          HashcolTgt = sha2(256, sql_EMPID,sql_EMPNAME,sql_EMPSAL,sql_DEPTID)) ~> DefiningInsertCondition",
+				"AssignIsActive sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          UID as integer,",
+				"          EMPID as integer,",
+				"          EMPNAME as string,",
+				"          EMPSAL as integer,",
+				"          DEPTID as integer,",
+				"          ISACTIVE as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 2,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          EMPID,",
+				"          EMPNAME = ENAME,",
+				"          EMPSAL = ESAL,",
+				"          DEPTID,",
+				"          ISACTIVE = IsActive",
+				"     )) ~> sinkInsert",
+				"UpdatingIsActiveflagto0 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          UID as integer,",
+				"          EMPID as integer,",
+				"          EMPNAME as string,",
+				"          EMPSAL as integer,",
+				"          DEPTID as integer,",
+				"          ISACTIVE as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:false,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['UID'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          UID = sql_UID,",
+				"          EMPID = sql_EMPID,",
+				"          EMPNAME = sql_EMPNAME,",
+				"          EMPSAL = sql_EMPSAL,",
+				"          DEPTID = sql_DEPTID,",
+				"          ISACTIVE",
+				"     )) ~> sinkUpdate"
+			]
+		}
+	}
+}

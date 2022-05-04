@@ -1,0 +1,46 @@
+{
+	"name": "ds_EmpSrcWestFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage_SourceFiles",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "EmpListWest.txt",
+				"folderPath": "sourcefiles/RemoveDuplicates_UnionAgg_Scenario",
+				"container": "gsk"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "104",
+				"type": "String"
+			},
+			{
+				"name": "RAVI",
+				"type": "String"
+			},
+			{
+				"name": "7000",
+				"type": "String"
+			},
+			{
+				"name": "CALIFORNIA",
+				"type": "String"
+			},
+			{
+				"name": "10",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
