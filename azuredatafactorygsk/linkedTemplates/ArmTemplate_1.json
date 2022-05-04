@@ -1,0 +1,910 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "azuredatafactorygsk"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_FileNamesDynamically')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "GetFileNamesDynamically",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_Emplists_SourceDatasets",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "GetFileNamesDynamically",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GetFileNamesDynamically').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "CopyFile",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_EmpInputFileDataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"FileName": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_Emplists_TargetFiles",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-04-28T18:27:29Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_FilestoAzureSQLDB')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "GetFilesData",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_Emplists_SourceDatasets",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "GetEachFileNametoProcess",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "GetFilesData",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GetFilesData').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "CopyFilesDatatoAzureSQLDB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "AzureSqlSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": false
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_blob_EmpLocDtls",
+											"type": "DatasetReference",
+											"parameters": {
+												"FileName": {
+													"value": "@item().Name",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "AzureSqlTable_EmpLocDtl",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-04-28T21:12:55Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_Test_GetFilenames')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "GetFileNames",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "db_Test_EmpLists_SourceFiles",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEachFile",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "GetFileNames",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GetFileNames').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "CopyEachFiletoAzureSQLTargetTable",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_Test_EmpLists_SourceFiles_ForEachFile",
+											"type": "DatasetReference",
+											"parameters": {
+												"FileName": {
+													"value": "@item().Name",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_TargetEmpLists",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-04-28T18:43:06Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_Remove_Duplicates')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_EmpSrcEastFile1",
+								"type": "DatasetReference"
+							},
+							"name": "EmpSrcEastFile"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_EmpSrcEast2ndFile",
+								"type": "DatasetReference"
+							},
+							"name": "EmpSrcEast2ndFile"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_EmpLocDtl",
+								"type": "DatasetReference"
+							},
+							"name": "sinkEmpFileListCompleteData"
+						}
+					],
+					"transformations": [
+						{
+							"name": "union1"
+						},
+						{
+							"name": "RemovingDups"
+						},
+						{
+							"name": "sortonEmpId"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPID as string,",
+						"          EMPNAME as string,",
+						"          EMPSAL as string,",
+						"          EMPLOCATION as string,",
+						"          DEPTID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpSrcEastFile",
+						"source(output(",
+						"          EMPID as string,",
+						"          EMPNAME as string,",
+						"          EMPSAL as string,",
+						"          EMPLOCATION as string,",
+						"          DEPTID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpSrcEast2ndFile",
+						"EmpSrcEastFile, EmpSrcEast2ndFile union(byName: true)~> union1",
+						"union1 aggregate(groupBy(EMPID),",
+						"     each(match(name!='EMPID'), $$ = first($$))) ~> RemovingDups",
+						"RemovingDups sort(asc(EMPID, true)) ~> sortonEmpId",
+						"sortonEmpId sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          EMPID as integer,",
+						"          EMPNAME as string,",
+						"          EMPSAL as integer,",
+						"          EMPLOCATION as string,",
+						"          DEPTID as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> sinkEmpFileListCompleteData"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_scdType2')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_EmpFile",
+								"type": "DatasetReference"
+							},
+							"name": "EmpSrc"
+						},
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_EMPTGT_SCD_TYPE2",
+								"type": "DatasetReference"
+							},
+							"name": "EMPTGTSCDTYPE2"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_EMPTGT_SCD_TYPE2",
+								"type": "DatasetReference"
+							},
+							"name": "sinkInsert"
+						},
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_EMPTGT_SCD_TYPE2",
+								"type": "DatasetReference"
+							},
+							"name": "sinkUpdate"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AssignIsActive"
+						},
+						{
+							"name": "lookuponTargetEmpforUpdate"
+						},
+						{
+							"name": "AssigningIsActiveto0"
+						},
+						{
+							"name": "UpdatingIsActiveflagto0"
+						},
+						{
+							"name": "RenamingTargetColumns"
+						},
+						{
+							"name": "selectingonlyrequiredcols"
+						},
+						{
+							"name": "lookuponTargetEmpforInsert"
+						},
+						{
+							"name": "FilteringNewRecordsandChangedRecs"
+						},
+						{
+							"name": "DefiningUpdateCondition"
+						},
+						{
+							"name": "FilteringOnlyExistingRecordswithChanges"
+						},
+						{
+							"name": "DefiningInsertCondition"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPID as integer,",
+						"          ENAME as string,",
+						"          ESAL as integer,",
+						"          DEPTID as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpSrc",
+						"source(output(",
+						"          UID as integer,",
+						"          EMPID as integer,",
+						"          EMPNAME as string,",
+						"          EMPSAL as integer,",
+						"          DEPTID as integer,",
+						"          ISACTIVE as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> EMPTGTSCDTYPE2",
+						"FilteringNewRecordsandChangedRecs derive(IsActive = 1) ~> AssignIsActive",
+						"EmpSrc, RenamingTargetColumns lookup(EMPID == sql_EMPID,",
+						"     multiple: false,",
+						"     pickup: 'any',",
+						"     broadcast: 'auto')~> lookuponTargetEmpforUpdate",
+						"selectingonlyrequiredcols derive(ISACTIVE = 0) ~> AssigningIsActiveto0",
+						"AssigningIsActiveto0 alterRow(updateIf(true())) ~> UpdatingIsActiveflagto0",
+						"EMPTGTSCDTYPE2 select(mapColumn(",
+						"          sql_UID = UID,",
+						"          sql_EMPID = EMPID,",
+						"          sql_EMPNAME = EMPNAME,",
+						"          sql_EMPSAL = EMPSAL,",
+						"          sql_DEPTID = DEPTID,",
+						"          sql_ISACTIVE = ISACTIVE",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> RenamingTargetColumns",
+						"FilteringOnlyExistingRecordswithChanges select(mapColumn(",
+						"          sql_UID,",
+						"          sql_EMPID,",
+						"          sql_EMPNAME,",
+						"          sql_EMPSAL,",
+						"          sql_DEPTID,",
+						"          sql_ISACTIVE",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> selectingonlyrequiredcols",
+						"EmpSrc, RenamingTargetColumns lookup(EMPID == sql_EMPID,",
+						"     multiple: false,",
+						"     pickup: 'any',",
+						"     broadcast: 'auto')~> lookuponTargetEmpforInsert",
+						"DefiningInsertCondition filter(isNull (sql_EMPID) || (HashcolSrc!=HashcolTgt)) ~> FilteringNewRecordsandChangedRecs",
+						"lookuponTargetEmpforUpdate derive(HashcolSrc = sha2(256,EMPID,ENAME,ESAL,DEPTID ),",
+						"          HashcolTgt = sha2(256, sql_EMPID,sql_EMPNAME,sql_EMPSAL,sql_DEPTID)) ~> DefiningUpdateCondition",
+						"DefiningUpdateCondition filter(!isNull (sql_EMPID) && HashcolSrc!=HashcolTgt) ~> FilteringOnlyExistingRecordswithChanges",
+						"lookuponTargetEmpforInsert derive(HashcolSrc = sha2(256,EMPID,ENAME,ESAL,DEPTID ),",
+						"          HashcolTgt = sha2(256, sql_EMPID,sql_EMPNAME,sql_EMPSAL,sql_DEPTID)) ~> DefiningInsertCondition",
+						"AssignIsActive sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          UID as integer,",
+						"          EMPID as integer,",
+						"          EMPNAME as string,",
+						"          EMPSAL as integer,",
+						"          DEPTID as integer,",
+						"          ISACTIVE as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     saveOrder: 2,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          EMPID,",
+						"          EMPNAME = ENAME,",
+						"          EMPSAL = ESAL,",
+						"          DEPTID,",
+						"          ISACTIVE = IsActive",
+						"     )) ~> sinkInsert",
+						"UpdatingIsActiveflagto0 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          UID as integer,",
+						"          EMPID as integer,",
+						"          EMPNAME as string,",
+						"          EMPSAL as integer,",
+						"          DEPTID as integer,",
+						"          ISACTIVE as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:false,",
+						"     updateable:true,",
+						"     upsertable:false,",
+						"     keys:['UID'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     saveOrder: 1,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          UID = sql_UID,",
+						"          EMPID = sql_EMPID,",
+						"          EMPNAME = sql_EMPNAME,",
+						"          EMPSAL = sql_EMPSAL,",
+						"          DEPTID = sql_DEPTID,",
+						"          ISACTIVE",
+						"     )) ~> sinkUpdate"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_scdtype1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_EmpFile",
+								"type": "DatasetReference"
+							},
+							"name": "EmpSrc"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_EmpSink",
+								"type": "DatasetReference"
+							},
+							"name": "Empsink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "alterRow"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPID as integer,",
+						"          ENAME as string,",
+						"          ESAL as integer,",
+						"          DEPTID as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpSrc",
+						"EmpSrc alterRow(upsertIf(true())) ~> alterRow",
+						"alterRow sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          EMPID as integer,",
+						"          ENAME as string,",
+						"          ESAL as integer,",
+						"          DEPTID as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:false,",
+						"     updateable:false,",
+						"     upsertable:true,",
+						"     keys:['EMPID'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          EMPID,",
+						"          ENAME,",
+						"          ESAL,",
+						"          DEPTID",
+						"     )) ~> Empsink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_RemoveDuplicates')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_Remove_Duplicates",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_Remove_Duplicates",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpSrcEastFile": {},
+									"EmpSrcEast2ndFile": {},
+									"sinkEmpFileListCompleteData": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-04-28T23:14:57Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_Remove_Duplicates')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_df_scdType1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_scdType1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_scdtype1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpSrc": {},
+									"Empsink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-04-28T05:22:47Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_scdtype1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_df_scdType2')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_scdType2",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_scdType2",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpSrc": {},
+									"EMPTGTSCDTYPE2": {},
+									"sinkInsert": {},
+									"sinkUpdate": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-04-28T15:49:28Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_scdType2')]"
+			]
+		}
+	]
+}
