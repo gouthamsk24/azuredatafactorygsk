@@ -1,12 +1,12 @@
 {
-	"name": "ds_TargetEmpLists",
+	"name": "ds_parameterize_FileName",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureBlobStorage_SourceFiles",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"TargetFileName": {
+			"SourceFileName": {
 				"type": "string"
 			}
 		},
@@ -16,10 +16,10 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": {
-					"value": "@dataset().TargetFileName",
+					"value": "@dataset().SourceFileName",
 					"type": "Expression"
 				},
-				"folderPath": "TargetTestfiles",
+				"folderPath": "sourcefiles",
 				"container": "gsk"
 			},
 			"columnDelimiter": ",",
@@ -28,6 +28,5 @@
 			"quoteChar": "\""
 		},
 		"schema": []
-	},
-	"type": "Microsoft.DataFactory/factories/datasets"
+	}
 }
