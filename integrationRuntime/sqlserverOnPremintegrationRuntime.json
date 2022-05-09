@@ -1,0 +1,6 @@
+{
+	"name": "sqlserverOnPremintegrationRuntime",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}
